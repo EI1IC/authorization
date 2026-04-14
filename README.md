@@ -2,7 +2,7 @@
 
 Django-проект с кастомной JWT-аутентификацией и Role-Based Access Control (RBAC) для управления правами доступа.
 
-## 📋 Описание
+## Описание
 
 Проект реализует систему безопасности с явным маппингом `Ресурс × Действие`. Авторизация проверяет наличие записи в базе данных для текущего пользователя, ресурса и HTTP-метода.
 
@@ -14,7 +14,7 @@ Django-проект с кастомной JWT-аутентификацией и 
 - **Soft-delete** пользователей без физического удаления записей
 - **Валидация данных** через DRF Serializers
 
-## 🏗 Архитектура доступа
+## Архитектура доступа
 
 ```
 User → UserRole → Role → RolePermission → Resource + Action
@@ -31,29 +31,30 @@ User → UserRole → Role → RolePermission → Resource + Action
 | `UserRole` | Привязка пользователя к ролям (многие-ко-многим) |
 | `TokenBlacklist` | Отозванные JWT-токены для server-side logout |
 
-## 🔐 Аутентификация
+## Аутентификация
 
 - Токен передаётся в заголовке: `Authorization: Bearer <token>`
 - Срок жизни токена: **60 минут**
 - Пароли хранятся через **PBKDF2** (`make_password`)
 - При logout токен добавляется в чёрный список
 
-## 🛡 Безопасность
+## Безопасность
 
 - Soft-delete (`is_active=False`) блокирует вход и авторизацию
 - Валидация входных данных через DRF Serializers
 - Кастомный класс разрешений `RBACPermission`
 - Проверка токена на отзыв при каждом запросе
 
-## 🚀 Быстрый старт
+## Быстрый старт
 
 ### Требования
 
 - Python 3.12+
-- PostgreSQL
+- PostgreSQL 12+
 - Django 6.0+
-- djangorestframework
-- PyJWT
+- djangorestframework 3.14+
+- PyJWT 2.8+
+- psycopg2-binary 2.9+
 
 ### Установка
 
@@ -69,7 +70,12 @@ User → UserRole → Role → RolePermission → Resource + Action
    venv\Scripts\activate     # Windows
    ```
 
-3. **Настройте базу данных PostgreSQL:**
+3. **Установите зависимости:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Настройте базу данных PostgreSQL:**
    
    Убедитесь, что PostgreSQL запущен и создана БД `auth_db`:
    ```sql
@@ -90,24 +96,25 @@ User → UserRole → Role → RolePermission → Resource + Action
    }
    ```
 
-4. **Примените миграции:**
+5. **Примените миграции:**
    ```bash
+   python manage.py makemigrations core
    python manage.py migrate
    ```
 
-5. **Заполните БД тестовыми данными:**
+6. **Заполните БД тестовыми данными:**
    ```bash
    python manage.py seed_data
    ```
 
-6. **Запустите сервер разработки:**
+7. **Запустите сервер разработки:**
    ```bash
    python manage.py runserver
    ```
 
-7. **API доступно по адресу:** `http://127.0.0.1:8000/api/`
+8. **API доступно по адресу:** `http://127.0.0.1:8000/api/`
 
-## 📡 API Endpoints
+## API Endpoints
 
 ### Аутентификация
 
@@ -135,7 +142,7 @@ User → UserRole → Role → RolePermission → Resource + Action
 | POST | `/api/admin/rules/` | Создание нового правила | `admin_rules.create` |
 | POST | `/api/admin/assign-role/` | Назначение роли пользователю | `admin_rules.create` |
 
-## 📝 Примеры запросов
+## Примеры запросов
 
 ### Регистрация пользователя
 
@@ -203,7 +210,7 @@ curl -X POST http://127.0.0.1:8000/api/admin/rules/ \
   }'
 ```
 
-## 👤 Тестовые учётные данные
+## Тестовые учётные данные
 
 После выполнения `seed_data` доступны следующие пользователи:
 
@@ -212,15 +219,18 @@ curl -X POST http://127.0.0.1:8000/api/admin/rules/ \
 | `admin@test.com` | `admin123` | admin | Полный доступ ко всем ресурсам |
 | `viewer@test.com` | `viewer123` | viewer | Только чтение `posts` и `reports` |
 
-## 🏗 Структура проекта
+## Структура проекта
 
 ```
 auth_backend/
 ├── config/                 # Настройки Django
+│   ├── __init__.py
+│   ├── asgi.py
 │   ├── settings.py         # Конфигурация проекта
 │   ├── urls.py             # Корневые URL
 │   └── wsgi.py
 ├── core/                   # Основное приложение
+│   ├── __init__.py
 │   ├── models.py           # Модели данных (User, Role, Resource...)
 │   ├── views.py            # API Views
 │   ├── admin_views.py      # Админские Views
@@ -229,51 +239,17 @@ auth_backend/
 │   ├── auth.py             # CustomJWTAuthentication
 │   ├── jwt_utils.py        # Утилиты для работы с JWT
 │   ├── urls.py             # Маршруты API
-│   └── management/commands/
-│       └── seed_data.py    # Команда заполнения тестовыми данными
+│   ├── tests.py            # Тесты
+│   └── management/
+│       ├── __init__.py
+│       └── commands/
+│           ├── __init__.py
+│           └── seed_data.py  # Команда заполнения тестовыми данными
+├── requirements.txt        # Зависимости Python
 ├── manage.py               # Django CLI утилита
-└── venv/                   # Виртуальное окружение
+├── README.md               # Этот файл
+└── venv/                   # Виртуальное окружение (не коммитить)
 ```
 
-## ⚙️ Конфигурация
-
-### Переменные окружения (рекомендуется для production)
-
-Для production-окружения рекомендуется вынести чувствительные данные в переменные окружения:
-
-```python
-# config/settings.py
-import os
-
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-...')
-DEBUG = os.environ.get('DEBUG', 'False') == 'True'
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME', 'auth_db'),
-        'USER': os.environ.get('DB_USER', 'postgres'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
-        'HOST': os.environ.get('DB_HOST', 'localhost'),
-        'PORT': os.environ.get('DB_PORT', '5432'),
-    }
-}
-```
-
-## 🧪 Тестирование
-
-```bash
-python manage.py test core
-```
-
-## 📄 Лицензия
-
-MIT
-
-## 🤝 Вклад в проект
-
-1. Fork репозитория
-2. Создайте ветку (`git checkout -b feature/amazing-feature`)
-3. Закоммитьте изменения (`git commit -m 'Add amazing feature'`)
-4. Push в ветку (`git push origin feature/amazing-feature`)
-5. Откройте Pull Request
+## Лицензия
+Программ создана в образовательных целях для выполнения тестового задания
