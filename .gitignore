@@ -1,1 +1,14 @@
-(empty)
+__pycache__/
+*.pyc
+*.pyo
+
+venv/
+.venv/
+env/
+
+*.log
+staticfiles/
+media/
+
+.env
+.env.*
